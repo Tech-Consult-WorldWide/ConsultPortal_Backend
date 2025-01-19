@@ -1,4 +1,9 @@
+//--------------------------------------------
+// services/solaceClient.js
+//--------------------------------------------
 const solace = require("solclientjs");
+// Import the `io` we exported in server.js
+const { io } = require("../server"); 
 
 class SolaceClient {
   constructor() {
@@ -20,6 +25,15 @@ class SolaceClient {
     this.session.on(solace.SessionEventCode.UP_NOTICE, () => {
       console.log("Connected to Solace Cloud");
       this.isConnected = true;
+
+      // Subscribe to a wildcard topic to receive all chat messages
+      // so we can re-broadcast to Socket.io
+      this.session.subscribe(
+        solace.SolclientFactory.createTopicDestination("app/chat/>"),
+        true,   // request confirmation
+        "chat-subscription",
+        10000   // timeout
+      );
     });
 
     this.session.on(solace.SessionEventCode.CONNECT_FAILED_ERROR, (error) => {
@@ -31,6 +45,23 @@ class SolaceClient {
       this.isConnected = false;
     });
 
+    this.session.on(solace.SessionEventCode.MESSAGE, (message) => {
+      // This runs whenever a message arrives on subscribed topics
+      try {
+        const dataStr = message.getBinaryAttachment();
+        const data = JSON.parse(dataStr);
+
+        // For example, data = { conversationId, senderId, message, timestamp }
+        if (data.conversationId) {
+          // Broadcast it to all connected sockets in that "room"
+          io.to(data.conversationId).emit("chatMessage", data);
+        }
+      } catch (err) {
+        console.error("Error parsing incoming Solace message:", err);
+      }
+    });
+
+    // Finally connect
     this.session.connect();
   }
 
