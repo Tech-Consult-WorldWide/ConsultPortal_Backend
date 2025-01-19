@@ -38,6 +38,8 @@ The backend for **ConsultPortal**, a real-time expert consultation platform. The
 ---
 
 ## **Project Structure**
+
+```
 ├── node_modules
 ├── routes/                # API routes
 │   ├── availability.js    # Routes for availability updates
@@ -49,18 +51,57 @@ The backend for **ConsultPortal**, a real-time expert consultation platform. The
 ├── server.js              # Main backend server
 ├── package.json           # Backend dependencies
 ├── .env                   # Environment variables
+```
 
 ---
 
 ## **Setup Instructions**
 
 ### **1. Clone the Repository**
+
 ```bash
 git clone <backend-repo-url>
 cd backend
-```bash
+```
 
-### **2. Clone the Repository**
+### **2. Install Dependencies**
+
 ```bash
 npm install
+```
+
+### **3. Configure Environment Variables**
+
+Create a `.env` file in the root directory and add the following:
+
 ```bash
+PORT=9000
+SOLACE_URL=wss://<your-solace-host>:443
+SOLACE_VPN=<your-vpn-name>
+SOLACE_USERNAME=<your-username>
+SOLACE_PASSWORD=<your-password>
+EMAIL_USER=<your-email>
+EMAIL_PASS=<your-email-password>
+```
+
+### **4. Start the Server**
+
+```bash
+node server.js
+```
+
+The server will run on [http://localhost:9000](http://localhost:9000).
+
+---
+
+## **Key Solace Integrations**
+
+1. **Expert Availability**:
+   - Experts publish their availability updates to the topic: `app/expert/status/<expertId>`.
+   - Clients subscribe to the topic to see real-time availability updates.
+
+2. **Real-Time Chat**:
+   - Chat messages are published to and received from the topic: `app/chat/<conversationId>`.
+
+3. **Appointment Events**:
+   - Appointment booking events are published to Solace for extensibility.
